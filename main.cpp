@@ -230,7 +230,11 @@ public:
     ~OpenMPTask_6() override = default;
 
     void execute() override {
-
+        int a[100];
+        int max_range = 100;
+        for (int i = 0; i < 100; ++i) {
+            a[i] = rand() % max_range;
+        }
     }
 };
 
