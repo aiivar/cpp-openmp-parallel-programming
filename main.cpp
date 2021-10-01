@@ -4,7 +4,8 @@
 
 class Strategy {
 public:
-    virtual ~Strategy() = default;
+    ~Strategy() = default;
+    Strategy() = default;
 
     virtual void execute() = 0;
 };
@@ -34,11 +35,6 @@ public:
 
 class OpenMPTask_1 : public Strategy {
 public:
-
-    ~OpenMPTask_1() override = default;
-
-    OpenMPTask_1() = default;
-
     void execute() override {
 
 #pragma omp parallel num_threads(8)
@@ -49,11 +45,6 @@ public:
 
 class OpenMPTask_2 : public Strategy {
 public:
-
-    OpenMPTask_2() = default;
-
-    ~OpenMPTask_2() override = default;
-
     void execute() override {
 
         int n1, n2;
@@ -80,10 +71,6 @@ public:
 
 class OpenMPTask_3 : public Strategy {
 public:
-    OpenMPTask_3() = default;
-
-    ~OpenMPTask_3() override = default;
-
     void execute() override {
 
         int a, b;
@@ -115,10 +102,6 @@ public:
 
 class OpenMPTask_4 : public Strategy {
 public:
-    ~OpenMPTask_4() override = default;
-
-    OpenMPTask_4() = default;
-
     void execute() override {
 
         int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -153,10 +136,6 @@ public:
 
 class OpenMPTask_5 : public Strategy {
 public:
-    OpenMPTask_5() = default;
-
-    ~OpenMPTask_5() override = default;
-
     void execute() override {
 
         int d[6][8];
@@ -226,26 +205,75 @@ public:
 
 class OpenMPTask_6 : public Strategy{
 public:
-    OpenMPTask_6() = default;
-    ~OpenMPTask_6() override = default;
-
     void execute() override {
-        int a[100];
+        const int n = 100;
+        int a[n];
         int max_range = 100;
-        for (int i = 0; i < 100; ++i) {
+        for (int i = 0; i < n; ++i) {
             a[i] = rand() % max_range;
         }
+        int sum = 0;
+#pragma omp parallel
+        {
+            //TODO 6th task
+        };
     }
 };
 
+class OpenMPTask_7 : public Strategy{
+public:
+    void execute() override {
+        //TODO 7th task
+    }
+};
+
+class OpenMPTask_8 : public Strategy{
+public:
+    void execute() override {
+        //TODO 8th task
+    }
+};
+
+class OpenMPTask_9 : public Strategy{
+public:
+    void execute() override {
+        //TODO 9th
+    }
+};
+
+class OpenMPTask_10 : public Strategy{
+public:
+    void execute() override {
+        //TODO 10th
+    }
+};
+
+class OpenMPTask_11 : public Strategy{
+public:
+    void execute() override {
+        //TODO 11th
+    }
+};
+
+class OpenMPTask_12 : public Strategy{
+public:
+    void execute() override {
+        //TODO 12th
+    }
+};
+
+class OpenMPTask_13 : public Strategy{
+public:
+    void execute() override {
+        //TODO 13th
+    }
+};
+
+std::map<int, Strategy *> &getMap(std::map<int, Strategy *> &taskMapping);
+
 int main() {
     std::map<int, Strategy *> taskMapping;
-    taskMapping[1] = new OpenMPTask_1();
-    taskMapping[2] = new OpenMPTask_2();
-    taskMapping[3] = new OpenMPTask_3();
-    taskMapping[4] = new OpenMPTask_4();
-    taskMapping[5] = new OpenMPTask_5();
-    taskMapping[6] = new OpenMPTask_6();
+    taskMapping = getMap(taskMapping);
 
     int task;
 
@@ -263,4 +291,21 @@ int main() {
 
     //end
     return 0;
+}
+
+std::map<int, Strategy *> &getMap(std::map<int, Strategy *> &taskMapping) {
+    taskMapping[1] = new OpenMPTask_1();
+    taskMapping[2] = new OpenMPTask_2();
+    taskMapping[3] = new OpenMPTask_3();
+    taskMapping[4] = new OpenMPTask_4();
+    taskMapping[5] = new OpenMPTask_5();
+    taskMapping[6] = new OpenMPTask_6();
+    taskMapping[7] = new OpenMPTask_7();
+    taskMapping[8] = new OpenMPTask_8();
+    taskMapping[9] = new OpenMPTask_9();
+    taskMapping[10] = new OpenMPTask_10();
+    taskMapping[11] = new OpenMPTask_11();
+    taskMapping[12] = new OpenMPTask_11();
+    taskMapping[13] = new OpenMPTask_13();
+    return taskMapping;
 }
