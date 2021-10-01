@@ -87,28 +87,28 @@ public:
     void execute() override {
 
         int a, b;
-        a = 0;
-        b = 0;
+        a = 10;
+        b = 20;
 
-        printf("-- Before: a = %d, b = %d --\n", a, b);
+        printf("---- Before: a = %d, b = %d ----\n", a, b);
 
 #pragma omp parallel num_threads(2) private(a) firstprivate(b)
         {
             a = 0;
             a += omp_get_thread_num();
             b += omp_get_thread_num();
-            printf("-- Region 1: a = %d, b = %d --\n", &a, &b);
+            printf("-- Thread #%d Region 1: a = %d, b = %d --\n", omp_get_thread_num(), a, b);
         }
-
+        printf("---- After Region 1: a = %d, b = %d ----\n", a, b);
 #pragma omp parallel num_threads(4) shared(a) private(b)
         {
             b = 0;
 #pragma omp atomic
             a -= omp_get_thread_num();
             b -= omp_get_thread_num();
-            printf("-- Region 2: a = %d, b = %d --\n", a, b);
+            printf("-- Thread #%d Region 2: a = %d, b = %d --\n", omp_get_thread_num(), a, b);
         }
-        printf("-- After: a = %d, b = %d --\n", a, b);
+        printf("---- After Region 2: a = %d, b = %d ----\n", a, b);
 
     }
 };
@@ -147,7 +147,7 @@ public:
             }
         }
 
-        printf("Min a[] = %d, max b[] = %d", &targetA, &targetB);
+        printf("Min a[] = %d, max b[] = %d\n", targetA, targetB);
     }
 };
 
@@ -160,10 +160,11 @@ public:
     void execute() override {
 
         int d[6][8];
+        int max_range = 10;
 
         for (int i = 0; i < 6; ++i) {
             for (int j = 0; j < 8; ++j) {
-                d[i][j] = rand() % 10;
+                d[i][j] = rand() % max_range;
             }
         }
         for (int i = 0; i < 6; ++i) {
@@ -171,16 +172,65 @@ public:
             for (int j = 0; j < 8; ++j) {
                 printf("%d ", d[i][j]);
             }
-            printf("|\n\n");
+            printf("|\n");
         }
+        printf("\n");
 
 #pragma omp parallel sections
         {
 #pragma omp section
             {
-
+                int sum = 0;
+                int count = 0;
+                for (int i = 0; i < 6; ++i) {
+                    for (int j = 0; j < 8; ++j) {
+                        sum += d[i][j];
+                        count++;
+                    }
+                }
+                float n = sum * 1.0 / count;
+                printf("-- Среднее арифмитическое = %.4f (Tread #%d)\n", n, omp_get_thread_num());
+            }
+#pragma omp section
+            {
+                int min = max_range;
+                int max = -1;
+                for (int i = 0; i < 6; ++i) {
+                    for (int j = 0; j < 8; ++j) {
+                        if (max < d[i][j]){
+                            max = d[i][j];
+                        }
+                        if (min > d[i][j]){
+                            min = d[i][j];
+                        }
+                    }
+                }
+                printf("-- Максимальное значение = %d (Tread #%d)\n-- Минимальное значение = %d (Tread #%d)\n", max, omp_get_thread_num(), min, omp_get_thread_num());
+            }
+#pragma omp section
+            {
+                int count = 0;
+                int divider = 3;
+                for (int i = 0; i < 6; ++i) {
+                    for (int j = 0; j < 8; ++j) {
+                        if (d[i][j] % divider == 0){
+                            count++;
+                        }
+                    }
+                }
+                printf("-- Количество элементов кратных трем = %d (Tread #%d)\n", count, omp_get_thread_num());
             }
         }
+    }
+};
+
+class OpenMPTask_6 : public Strategy{
+public:
+    OpenMPTask_6() = default;
+    ~OpenMPTask_6() override = default;
+
+    void execute() override {
+
     }
 };
 
@@ -191,6 +241,7 @@ int main() {
     taskMapping[3] = new OpenMPTask_3();
     taskMapping[4] = new OpenMPTask_4();
     taskMapping[5] = new OpenMPTask_5();
+    taskMapping[6] = new OpenMPTask_6();
 
     int task;
 
