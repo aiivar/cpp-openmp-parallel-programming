@@ -223,14 +223,77 @@ public:
 class OpenMPTask_7 : public Strategy{
 public:
     void execute() override {
-        //TODO 7th task
+        const int n = 12;
+        int a[n], b[n], c[n];
+
+#pragma omp parallel num_threads(3)
+        {
+#pragma omp for schedule(static)
+            for (int i = 0; i < n; ++i) {
+                a[i] = rand() % n;
+                b[i] = rand() % n;
+                printf("- Thread %d of %d\n", omp_get_thread_num()+1, omp_get_num_threads());
+            }
+        }
+
+        printf("a: ");
+        for (int i = 0; i < n; ++i) {
+            printf("%d ", a[i]);
+        }
+        printf("\n");
+        printf("b: ");
+        for (int i = 0; i < n; ++i) {
+            printf("%d ", b[i]);
+        }
+        printf("\n");
+
+#pragma omp parallel num_threads(4)
+        {
+#pragma omp for schedule(dynamic)
+            for (int i = 0; i < n; ++i) {
+                c[i] = a[i] + b[i];
+                printf("- Thread %d of %d\n", omp_get_thread_num()+1, omp_get_num_threads());
+            }
+        }
+
+        printf("c: ");
+        for (int i = 0; i < n; ++i) {
+            printf("%d ", c[i]);
+        }
+        printf("\n");
     }
 };
 
 class OpenMPTask_8 : public Strategy{
 public:
     void execute() override {
-        //TODO 8th task
+        const int n = 16;
+        int a[n];
+        double b[n];
+        for (int i = 0; i < n; ++i) {
+            a[i] = i;
+        }
+#pragma omp parallel for schedule(static) num_threads(8) shared(b)
+        for (int i = 1; i < n - 1; i++) {
+            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
+            printf("%.0f:%d ", b[i], omp_get_thread_num());
+            if (i == n - 2) printf("\n");
+        }
+
+#pragma omp parallel for schedule(dynamic) num_threads(8) shared(b)
+        for (int i = 1; i < n - 1; i++) {
+            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
+            printf("%.0f:%d ", b[i], omp_get_thread_num());
+            if (i == n - 2) printf("\n");
+        }
+
+#pragma omp parallel for schedule(dynamic, 3) num_threads(8) shared(b)
+        for (int i = 1; i < n - 1; i++) {
+            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
+            printf("%.0f:%d ", b[i], omp_get_thread_num());
+            if (i == n - 2) printf("\n");
+        }
+        printf("\n");
     }
 };
 
@@ -278,6 +341,7 @@ int main() {
     int task;
 
     printf("## Enter number of the task:");
+
     scanf("%d", &task);
 
     if (task < 1 || task > taskMapping.size()) {
