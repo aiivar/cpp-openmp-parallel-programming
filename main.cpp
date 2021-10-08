@@ -1,10 +1,12 @@
 #include <iostream>
 #include <map>
 #include <omp.h>
+#include <unistd.h>
 
 class Strategy {
 public:
     ~Strategy() = default;
+
     Strategy() = default;
 
     virtual void execute() = 0;
@@ -176,15 +178,16 @@ public:
                 int max = -1;
                 for (int i = 0; i < 6; ++i) {
                     for (int j = 0; j < 8; ++j) {
-                        if (max < d[i][j]){
+                        if (max < d[i][j]) {
                             max = d[i][j];
                         }
-                        if (min > d[i][j]){
+                        if (min > d[i][j]) {
                             min = d[i][j];
                         }
                     }
                 }
-                printf("-- Максимальное значение = %d (Tread #%d)\n-- Минимальное значение = %d (Tread #%d)\n", max, omp_get_thread_num(), min, omp_get_thread_num());
+                printf("-- Максимальное значение = %d (Tread #%d)\n-- Минимальное значение = %d (Tread #%d)\n", max,
+                       omp_get_thread_num(), min, omp_get_thread_num());
             }
 #pragma omp section
             {
@@ -192,7 +195,7 @@ public:
                 int divider = 3;
                 for (int i = 0; i < 6; ++i) {
                     for (int j = 0; j < 8; ++j) {
-                        if (d[i][j] % divider == 0){
+                        if (d[i][j] % divider == 0) {
                             count++;
                         }
                     }
@@ -203,7 +206,7 @@ public:
     }
 };
 
-class OpenMPTask_6 : public Strategy{
+class OpenMPTask_6 : public Strategy {
 public:
     void execute() override {
         const int n = 100;
@@ -220,7 +223,7 @@ public:
     }
 };
 
-class OpenMPTask_7 : public Strategy{
+class OpenMPTask_7 : public Strategy {
 public:
     void execute() override {
         const int n = 12;
@@ -232,7 +235,7 @@ public:
             for (int i = 0; i < n; ++i) {
                 a[i] = rand() % n;
                 b[i] = rand() % n;
-                printf("- Thread %d of %d\n", omp_get_thread_num()+1, omp_get_num_threads());
+                printf("- Thread %d of %d\n", omp_get_thread_num() + 1, omp_get_num_threads());
             }
         }
 
@@ -252,7 +255,7 @@ public:
 #pragma omp for schedule(dynamic)
             for (int i = 0; i < n; ++i) {
                 c[i] = a[i] + b[i];
-                printf("- Thread %d of %d\n", omp_get_thread_num()+1, omp_get_num_threads());
+                printf("- Thread %d of %d\n", omp_get_thread_num() + 1, omp_get_num_threads());
             }
         }
 
@@ -264,71 +267,248 @@ public:
     }
 };
 
-class OpenMPTask_8 : public Strategy{
+class OpenMPTask_8 : public Strategy {
 public:
     void execute() override {
-        const int n = 16;
+        const int n = 16000;
         int a[n];
         double b[n];
         for (int i = 0; i < n; ++i) {
             a[i] = i;
-        }
-#pragma omp parallel for schedule(static) num_threads(8) shared(b)
-        for (int i = 1; i < n - 1; i++) {
-            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
-            printf("%.0f:%d ", b[i], omp_get_thread_num());
-            if (i == n - 2) printf("\n");
-        }
-
-#pragma omp parallel for schedule(dynamic) num_threads(8) shared(b)
-        for (int i = 1; i < n - 1; i++) {
-            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
-            printf("%.0f:%d ", b[i], omp_get_thread_num());
-            if (i == n - 2) printf("\n");
-        }
-
-#pragma omp parallel for schedule(dynamic, 3) num_threads(8) shared(b)
-        for (int i = 1; i < n - 1; i++) {
-            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
-            printf("%.0f:%d ", b[i], omp_get_thread_num());
-            if (i == n - 2) printf("\n");
+//            printf("%d ", a[i]);
         }
         printf("\n");
+        printf("- static\n");
+        double start = omp_get_wtime();
+#pragma omp parallel for schedule(static) num_threads(8) firstprivate(b)
+        for (int i = 1; i < n - 1; i++) {
+            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
+//            printf("%.0f:%d ", b[i], omp_get_thread_num());
+        }
+        printf("Time: %lf\n", omp_get_wtime() - start);
+
+        printf("- dynamic\n");
+        start = omp_get_wtime();
+#pragma omp parallel for schedule(dynamic) num_threads(8) firstprivate(b)
+        for (int i = 1; i < n - 1; i++) {
+            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
+//            printf("%.0f:%d ", b[i], omp_get_thread_num());
+        }
+        printf("Time: %lf\n", omp_get_wtime() - start);
+
+        printf("- guided\n");
+        start = omp_get_wtime();
+#pragma omp parallel for schedule(guided) num_threads(8) firstprivate(b)
+        for (int i = 1; i < n - 1; i++) {
+            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
+//            printf("%.0f:%d ", b[i], omp_get_thread_num());
+        }
+        printf("Time: %lf\n", omp_get_wtime() - start);
+
+        printf("- runtime\n");
+        start = omp_get_wtime();
+#pragma omp parallel for schedule(runtime) num_threads(8) firstprivate(b)
+        for (int i = 1; i < n - 1; i++) {
+            b[i] = (a[i - 1] + a[i] + a[i + 1]) * 1.0 / 3;
+//            printf("%.0f:%d ", b[i], omp_get_thread_num());
+        }
+        printf("Time: %lf\n", omp_get_wtime() - start);
     }
 };
 
-class OpenMPTask_9 : public Strategy{
+class OpenMPTask_9 : public Strategy {
 public:
     void execute() override {
-        //TODO 9th
+        const int n = 12;
+        int matrix[n][n];
+        int vector[n];
+        int result[n];
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                matrix[i][j] = rand() % 10;
+            }
+        }
+        for (int i = 0; i < n; ++i) {
+            vector[i] = rand() % n;
+        }
+        printf("Matrix:\n");
+        for (int i = 0; i < n; ++i) {
+            printf("| ");
+            for (int j = 0; j < n; ++j) {
+                printf("%d ", matrix[i][j]);
+            }
+            printf("|\n");
+        }
+        printf("Vector:\n(");
+        for (int i = 0; i < n; ++i) {
+            if (i == n - 1) {
+                printf("%d", vector[i]);
+                continue;
+            }
+            printf("%d, ", vector[i]);
+        }
+        printf(")\n");
+
+#pragma omp parallel shared(matrix, vector, result)
+        {
+#pragma omp for schedule (dynamic)
+            for (int i = 0; i < n; ++i) {
+                result[i] = 0;
+                for (int j = 0; j < n; ++j) {
+                    result[i] += matrix[j][i] * vector[j];
+                }
+            }
+        }
+        printf("Result:\n(");
+        for (int i = 0; i < n; ++i) {
+            if (i == n - 1) {
+                printf("%d", result[i]);
+                continue;
+            }
+            printf("%d, ", result[i]);
+        }
+        printf(")\n");
     }
 };
 
-class OpenMPTask_10 : public Strategy{
+class OpenMPTask_10 : public Strategy {
 public:
     void execute() override {
-        //TODO 10th
+        int d[6][8];
+        int randMax = 100;
+
+        for (int i = 0; i < 6; ++i) {
+            for (int j = 0; j < 8; ++j) {
+                d[i][j] = rand() % randMax;
+            }
+        }
+        printf("Matrix:\n");
+        for (int i = 0; i < 6; ++i) {
+            printf("| ");
+            for (int j = 0; j < 8; ++j) {
+                printf("%d ", d[i][j]);
+            }
+            printf("|\n");
+        }
+
+        int max = -1;
+        int min = randMax + 1;
+#pragma omp parallel for
+        for (int i = 0; i < 6; ++i) {
+            for (int j = 0; j < 8; ++j) {
+#pragma omp critical
+                {
+                    if (min > d[i][j]) {
+                        min = d[i][j];
+                    }
+                }
+#pragma omp critical
+                {
+                    if (max < d[i][j]) {
+                        max = d[i][j];
+                    }
+                }
+            }
+        }
+        printf("- Max: %d\n- Min: %d\n", max, min);
     }
 };
 
-class OpenMPTask_11 : public Strategy{
+class OpenMPTask_11 : public Strategy {
 public:
     void execute() override {
-        //TODO 11th
+        int n = 30;
+        int randMax = 100;
+        int a[n];
+
+        for (int i = 0; i < n; ++i) {
+            a[i] = rand() % randMax;
+            char flag = 'f';
+            if (a[i] % 9 == 0) {
+                flag = 't';
+            }
+            printf("%d:%c ", a[i], flag);
+        }
+        printf("\n");
+
+        int count = 0;
+#pragma omp parallel for shared(count)
+        for (int i = 0; i < n; ++i) {
+            if (a[i] % 9 == 0) {
+#pragma omp atomic
+                count++;
+            }
+        }
+
+        printf("Count: %d\n", count);
     }
 };
 
-class OpenMPTask_12 : public Strategy{
+class OpenMPTask_12 : public Strategy {
 public:
     void execute() override {
-        //TODO 12th
+        int n = 20;
+        int randMax = 100;
+        int a[n];
+
+        for (int i = 0; i < n; ++i) {
+            a[i] = rand() % randMax;
+            char flag = 'f';
+            if (a[i] % 7 == 0) {
+                flag = 't';
+            }
+            printf("%d:%c ", a[i], flag);
+        }
+        printf("\n");
+        int max = -1;
+
+#pragma omp parallel for
+        for (int i = 0; i < n; ++i) {
+#pragma omp critical
+            {
+                if (max < a[i] && a[i] % 7 == 0) {
+                    max = a[i];
+                }
+            }
+        }
+
+        printf("Max (mod 7 == 0): %d\n", max);
     }
 };
 
-class OpenMPTask_13 : public Strategy{
+class OpenMPTask_13 : public Strategy {
 public:
     void execute() override {
-        //TODO 13th
+        int treadsCount = 8;
+        printf("\n- Method #3\n");
+#pragma omp parallel num_threads(treadsCount)
+        {
+            for (int i = treadsCount - 1; i >= 0; i--) {
+#pragma omp barrier
+                {
+                    if (i == omp_get_thread_num()) {
+                        printf("-- Hello world. Thread #%d, treads count %d --\n", omp_get_thread_num(),
+                               omp_get_num_threads());
+                    }
+                }
+            }
+        }
+
+        printf("\n- Method #2\n");
+#pragma omp parallel
+        {
+#pragma omp barrier
+            sleep(1 * (treadsCount - omp_get_thread_num()));
+            printf("-- Hello world. Thread #%d, treads count %d --\n", omp_get_thread_num(), omp_get_num_threads());
+        }
+
+        printf("\n- Method #3\n");
+#pragma omp parallel for schedule(static, 1) ordered
+        for (int i = treadsCount - 1; i >= 0; --i) {
+#pragma omp ordered
+            printf("-- Hello world. Thread #%d, treads count %d --\n", omp_get_thread_num(), omp_get_num_threads());
+        }
     }
 };
 
@@ -369,7 +549,7 @@ std::map<int, Strategy *> &getMap(std::map<int, Strategy *> &taskMapping) {
     taskMapping[9] = new OpenMPTask_9();
     taskMapping[10] = new OpenMPTask_10();
     taskMapping[11] = new OpenMPTask_11();
-    taskMapping[12] = new OpenMPTask_11();
+    taskMapping[12] = new OpenMPTask_12();
     taskMapping[13] = new OpenMPTask_13();
     return taskMapping;
 }
