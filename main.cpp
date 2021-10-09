@@ -212,14 +212,25 @@ public:
         const int n = 100;
         int a[n];
         int max_range = 100;
+        int sum = 0;
         for (int i = 0; i < n; ++i) {
             a[i] = rand() % max_range;
+            sum += a[i];
         }
-        int sum = 0;
-#pragma omp parallel
-        {
-            //TODO 6th task
-        };
+        printf("- Real: %.2lf\n", sum * 1.0 / n);
+        sum = 0;
+#pragma omp parallel for
+        for (int i = 0; i < n; ++i) {
+            sum += a[i];
+        }
+        printf("- Without reduction: %.2lf\n", sum * 1.0 / n);
+
+        sum = 0;
+#pragma omp parallel for reduction(+: sum)
+        for (int i = 0; i < n; ++i) {
+            sum += a[i];
+        }
+        printf("- With reduction: %.2lf\n", sum * 1.0 / n);
     }
 };
 
