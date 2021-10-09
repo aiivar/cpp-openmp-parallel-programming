@@ -408,16 +408,20 @@ public:
 #pragma omp parallel for
         for (int i = 0; i < 6; ++i) {
             for (int j = 0; j < 8; ++j) {
+                if (min > d[i][j]){
 #pragma omp critical
-                {
-                    if (min > d[i][j]) {
-                        min = d[i][j];
+                    {
+                        if (min > d[i][j]) {
+                            min = d[i][j];
+                        }
                     }
                 }
+                if (max < d[i][j]){
 #pragma omp critical
-                {
-                    if (max < d[i][j]) {
-                        max = d[i][j];
+                    {
+                        if (max < d[i][j]) {
+                            max = d[i][j];
+                        }
                     }
                 }
             }
